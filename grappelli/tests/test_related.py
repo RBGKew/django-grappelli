@@ -212,3 +212,18 @@ class RelatedTests(TestCase):
         response = self.client.get("%s?term=Category&app_label=%s&model_name=%s&query_string=name__icontains=99:id__gte=99" % (reverse("grp_autocomplete_lookup"), "grappelli", "category"))
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(response.content.decode('utf-8'), [{"value": 100, "label": "Category No 99 (100)"}])
+
+    def test_related_lookup_with_extra_data(self):
+        self.client.login(username="User001", password="user001")
+        response = self.client.get(reverse("grp_related_lookup"))
+        self.assertEqual(response.status_code, 403)
+
+        self.client.login(username="Superuser001", password="superuser001")
+        response = self.client.get(reverse("grp_related_lookup"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content.decode('utf-8'), [{"value": None, "label": ""}])
+
+        Category.objects.create(name="Category with extra stuff", stuff="stuff")
+        response = self.client.get("%s?term=Category&app_label=%s&model_name=%s&query_string=name__icontains=extra" % (reverse("grp_autocomplete_lookup"), "grappelli", "category"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content.decode('utf-8'), [{"value": 101, "label": "Category with extra stuff (101)", "extra": {"stuff": "stuff"}}])

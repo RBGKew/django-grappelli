@@ -10,6 +10,7 @@ from django.utils.encoding import python_2_unicode_compatible
 @python_2_unicode_compatible
 class Category(models.Model):
     name = models.CharField("Title", max_length=50)
+    stuff = models.CharField("Stuff", max_length=50)
 
     class Meta:
         app_label = "grappelli"
@@ -22,6 +23,10 @@ class Category(models.Model):
     @staticmethod
     def autocomplete_search_fields():
         return ("id__iexact", "name__icontains",)
+
+    @staticmethod
+    def related_return_fields():
+        return ("stuff",)
 
     def related_label(self):
         return "%s (%s)" % (self.name, self.id)

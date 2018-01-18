@@ -90,9 +90,7 @@
                             options.loader.show();
                         },
                         success: function(data){
-                            response($.map(data, function(item) {
-                                return {label: item.label, value: item.value};
-                            }));
+                            response(data);
                         },
                         complete: function (XMLHttpRequest, textStatus) {
                             options.loader.hide();
@@ -106,6 +104,7 @@
                     options.input_field.val(ui.item.label);
                     elem.val(ui.item.value);
                     elem.trigger('change');
+                    elem.trigger('django:related-selected', ui.item.extra);
                     elem.val() ? $(options.remove_link).show() : $(options.remove_link).hide();
                     return false;
                 }
@@ -134,6 +133,7 @@
             $.each(data, function(index) {
                 options.input_field.val(data[index].label);
                 elem.val() ? $(options.remove_link).show() : $(options.remove_link).hide();
+                elem.trigger('django:related-selected', data[index].extra);
             });
         });
     };

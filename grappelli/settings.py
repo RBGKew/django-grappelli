@@ -16,6 +16,8 @@ AUTOCOMPLETE_LIMIT = getattr(settings, "GRAPPELLI_AUTOCOMPLETE_LIMIT", 10)
 # Alternative approach to define autocomplete search fields
 AUTOCOMPLETE_SEARCH_FIELDS = getattr(settings, "GRAPPELLI_AUTOCOMPLETE_SEARCH_FIELDS", {})
 
+RELATED_RETURN_FIELDS = getattr(settings, "GRAPPELLI_RELATED_RETURN_FIELDS", {})
+
 # SWITCH_USER: Set True in order to activate this functionality
 SWITCH_USER = getattr(settings, "GRAPPELLI_SWITCH_USER", False)
 # SWITCH_USER_ORIGINAL: Defines if a user is allowed to login as another user.

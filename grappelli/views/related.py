@@ -20,7 +20,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.apps import apps
 
 # GRAPPELLI IMPORTS
-from grappelli.settings import AUTOCOMPLETE_LIMIT, AUTOCOMPLETE_SEARCH_FIELDS
+from grappelli.settings import AUTOCOMPLETE_LIMIT, AUTOCOMPLETE_SEARCH_FIELDS, RELATED_RETURN_FIELDS
 
 
 def get_label(f):
@@ -53,6 +53,20 @@ def get_autocomplete_search_fields(model):
         return AUTOCOMPLETE_SEARCH_FIELDS[model._meta.app_label][model._meta.model_name]
     except KeyError:
         return
+
+
+def return_fields(model):
+    """
+    Returns any extra model fields that might be needed when a selection is made
+    """
+    if hasattr(model, 'related_return_fields'):
+        return model.related_return_fields()
+    else:
+        return RELATED_RETURN_FIELDS
+
+
+def get_return_fields(obj, fields):
+    return {f: smart_text(getattr(obj, f)) for f in fields if (hasattr(obj, f) and getattr(obj, f))}
 
 
 class RelatedLookup(View):
@@ -94,7 +108,11 @@ class RelatedLookup(View):
         if obj_id:
             try:
                 obj = self.get_queryset().get(pk=obj_id)
-                data.append({"value": obj_id, "label": get_label(obj)})
+                extra = get_return_fields(obj, return_fields(self.model))
+                if(extra):
+                    data.append({"value": obj_id, "label": get_label(obj), "extra": extra})
+                else:
+                    data.append({"value": obj_id, "label": get_label(obj)})
             except (self.model.DoesNotExist, ValueError):
                 data.append({"value": obj_id, "label": _("?")})
         return data
@@ -124,7 +142,11 @@ class M2MLookup(RelatedLookup):
         for obj_id in (i for i in obj_ids if i):
             try:
                 obj = self.get_queryset().get(pk=obj_id)
-                data.append({"value": obj_id, "label": get_label(obj)})
+                extra = get_return_fields(obj, return_fields(self.model))
+                if(extra):
+                    data.append({"value": obj_id, "label": get_label(obj), "extra": extra})
+                else:
+                    data.append({"value": obj_id, "label": get_label(obj)})
             except (self.model.DoesNotExist, ValueError):
                 data.append({"value": obj_id, "label": _("?")})
         return data
@@ -210,7 +232,15 @@ class AutocompleteLookup(RelatedLookup):
         return qs.distinct()
 
     def get_data(self):
-        return [{"value": f.pk, "label": get_label(f)} for f in self.get_queryset()[:AUTOCOMPLETE_LIMIT]]
+        data = []
+        for obj in self.get_queryset()[:AUTOCOMPLETE_LIMIT]:
+            extra = get_return_fields(obj, return_fields(self.model))
+            if(extra):
+                data.append({"value": obj.pk, "label": get_label(obj), "extra": extra})
+            else:
+                data.append({"value": obj.pk, "label": get_label(obj)})
+
+        return data
 
     @never_cache
     def get(self, request, *args, **kwargs):
